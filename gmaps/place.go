@@ -104,6 +104,13 @@ func (j *PlaceJob) Process(_ context.Context, resp *scrapemate.Response) (any, [
 
 	entry.ID = j.ParentID
 
+	if entry.RemovedReviewsText == "" {
+		if removedReviewsText, ok := resp.Meta["removed_reviews_text"].(string); ok {
+		entry.RemovedReviewsText = removedReviewsText
+		entry.RemovedReviewsMin, entry.RemovedReviewsMax = parseReviewRemovals(removedReviewsText)
+		}
+	}
+
 	if entry.Link == "" {
 		entry.Link = j.GetURL()
 	}
@@ -176,6 +183,7 @@ func (j *PlaceJob) BrowserActions(ctx context.Context, page scrapemate.BrowserPa
 	}
 
 	resp.Meta["json"] = raw
+	resp.Meta["removed_reviews_text"] = j.extractReviewRemovalNotice(page)
 
 	if j.ExtractExtraReviews {
 		reviewCount := j.getReviewCount(raw)
@@ -292,6 +300,61 @@ func (j *PlaceJob) getReviewCount(data []byte) int {
 
 func (j *PlaceJob) UseInResults() bool {
 	return j.UsageInResultststs
+}
+
+func (j *PlaceJob) extractReviewRemovalNotice(page scrapemate.BrowserPage) string {
+	extractNotice := func() string {
+		rawNotice, err := page.Eval(`() => {
+		const bodyText = (document.body?.innerText || '').replace(/\u00A0/g, ' ');
+		if (!bodyText) return '';
+
+		// Match the whole disclaimer even when Google inserts newlines and extra snippets.
+		const patterns = [
+			/(\d+\s*(?:bis|to|-|–)\s*\d+)[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed)/i,
+			/(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,250}?(?:entfernt|removed)[\s\S]{0,150}?(\d+\s*(?:bis|to|-|–)\s*\d+)/i,
+		];
+
+		for (const pattern of patterns) {
+			const m = bodyText.match(pattern);
+			if (!m || m.index === undefined) continue;
+			const start = Math.max(0, m.index - 20);
+			const end = Math.min(bodyText.length, m.index + m[0].length + 20);
+			return bodyText.slice(start, end).trim();
+		}
+
+		return "";
+	}`)
+		if err != nil || rawNotice == nil {
+			return ""
+		}
+
+		notice, ok := rawNotice.(string)
+		if !ok {
+			return ""
+		}
+
+		return strings.TrimSpace(notice)
+	}
+
+	notice := extractNotice()
+	if notice != "" {
+		return notice
+	}
+
+	_, _ = page.Eval(`() => {
+		const candidates = document.querySelectorAll('button[jsaction*="reviewChart"], button[jsaction*="reviews"], button[role="tab"], a, button');
+		for (const el of candidates) {
+			const text = ((el.getAttribute('aria-label') || '') + ' ' + (el.textContent || '')).toLowerCase();
+			if (text.includes('review') || text.includes('rezension')) {
+				el.click();
+				return true;
+			}
+		}
+		return false;
+	}`)
+	time.Sleep(2 * time.Second)
+
+	return extractNotice()
 }
 
 const js = `

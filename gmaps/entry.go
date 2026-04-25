@@ -74,6 +74,9 @@ type Entry struct {
 	PlusCode            string                 `json:"plus_code"`
 	ReviewCount         int                    `json:"review_count"`
 	ReviewRating        float64                `json:"review_rating"`
+	RemovedReviewsText  string                 `json:"removed_reviews_text"`
+	RemovedReviewsMin   int                    `json:"removed_reviews_min"`
+	RemovedReviewsMax   int                    `json:"removed_reviews_max"`
 	ReviewsPerRating    map[int]int            `json:"reviews_per_rating"`
 	Latitude            float64                `json:"latitude"`
 	Longtitude          float64                `json:"longtitude"`
@@ -170,6 +173,9 @@ func (e *Entry) CsvHeaders() []string {
 		"plus_code",
 		"review_count",
 		"review_rating",
+		"removed_reviews_text",
+		"removed_reviews_min",
+		"removed_reviews_max",
 		"reviews_per_rating",
 		"latitude",
 		"longitude",
@@ -209,6 +215,9 @@ func (e *Entry) CsvRow() []string {
 		e.PlusCode,
 		stringify(e.ReviewCount),
 		stringify(e.ReviewRating),
+		e.RemovedReviewsText,
+		stringify(e.RemovedReviewsMin),
+		stringify(e.RemovedReviewsMax),
 		stringify(e.ReviewsPerRating),
 		stringify(e.Latitude),
 		stringify(e.Longtitude),
@@ -334,6 +343,8 @@ func EntryFromJSON(raw []byte, reviewCountOnly ...bool) (entry Entry, err error)
 	entry.Phone = getNthElementAndCast[string](darray, 178, 0, 0)
 	entry.PlusCode = getNthElementAndCast[string](darray, 183, 2, 2, 0)
 	entry.ReviewRating = getNthElementAndCast[float64](darray, 4, 7)
+	entry.RemovedReviewsText = extractReviewRemovalNoticeFromAny(jd)
+	entry.RemovedReviewsMin, entry.RemovedReviewsMax = parseReviewRemovals(entry.RemovedReviewsText)
 	entry.Latitude = getNthElementAndCast[float64](darray, 9, 2)
 	entry.Longtitude = getNthElementAndCast[float64](darray, 9, 3)
 	entry.Cid = getNthElementAndCast[string](jd, 25, 3, 0, 13, 0, 0, 1)
