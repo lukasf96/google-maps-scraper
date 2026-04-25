@@ -30,6 +30,18 @@ func TestParseReviewRemovals(t *testing.T) {
 			maxCount: 250,
 		},
 		{
+			name:     "german over threshold notice",
+			input:    "Über 250 Bewertungen aufgrund von Beschwerden wegen Diffamierung entfernt.",
+			minCount: 251,
+			maxCount: 0,
+		},
+		{
+			name:     "english over threshold notice",
+			input:    "Over 250 reviews removed due to defamation complaints.",
+			minCount: 251,
+			maxCount: 0,
+		},
+		{
 			name:     "invalid text",
 			input:    "No removals listed for this business.",
 			minCount: 0,
@@ -64,7 +76,7 @@ func TestExtractReviewRemovalNoticeFromAny(t *testing.T) {
 		[]any{
 			"bar",
 			map[string]any{
-				"x": "201 bis 250 Bewertungen aufgrund von Beschwerden wegen Diffamierung entfernt.",
+				"x": "Über 250 Bewertungen aufgrund von Beschwerden wegen Diffamierung entfernt.",
 			},
 		},
 	}
@@ -75,7 +87,7 @@ func TestExtractReviewRemovalNoticeFromAny(t *testing.T) {
 	}
 
 	minCount, maxCount := parseReviewRemovals(notice)
-	if minCount != 201 || maxCount != 250 {
-		t.Fatalf("unexpected parsed range: got %d-%d, want 201-250", minCount, maxCount)
+	if minCount != 251 || maxCount != 0 {
+		t.Fatalf("unexpected parsed range: got %d-%d, want 251-0", minCount, maxCount)
 	}
 }

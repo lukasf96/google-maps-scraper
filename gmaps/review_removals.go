@@ -7,6 +7,7 @@ import (
 )
 
 var reviewRemovalCountRegex = regexp.MustCompile(`(?i)\b(\d+)\s*(?:bis|to|-|–)\s*(\d+)\b`)
+var reviewRemovalOverCountRegex = regexp.MustCompile(`(?i)\b(?:über|ueber|over|more than)\s*(\d+)\b`)
 var reviewRemovalContextRegex = regexp.MustCompile(`(?i)(?:(?:diffam|defamation|beschwerden|complaints?).*(?:entfernt|removed))|(?:(?:entfernt|removed).*(?:diffam|defamation|beschwerden|complaints?))`)
 var reviewRemovalInlineRegex = regexp.MustCompile(`(?i)(\d+\s*(?:bis|to|-|–)\s*\d+[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed))`)
 
@@ -21,25 +22,35 @@ func parseReviewRemovals(raw string) (int, int) {
 	}
 
 	matches := reviewRemovalCountRegex.FindStringSubmatch(normalized)
-	if len(matches) != 3 {
+	if len(matches) == 3 {
+		minCount, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return 0, 0
+		}
+
+		maxCount, err := strconv.Atoi(matches[2])
+		if err != nil {
+			return 0, 0
+		}
+
+		if minCount > maxCount {
+			return maxCount, minCount
+		}
+
+		return minCount, maxCount
+	}
+
+	overMatches := reviewRemovalOverCountRegex.FindStringSubmatch(normalized)
+	if len(overMatches) != 2 {
 		return 0, 0
 	}
 
-	minCount, err := strconv.Atoi(matches[1])
+	threshold, err := strconv.Atoi(overMatches[1])
 	if err != nil {
 		return 0, 0
 	}
 
-	maxCount, err := strconv.Atoi(matches[2])
-	if err != nil {
-		return 0, 0
-	}
-
-	if minCount > maxCount {
-		return maxCount, minCount
-	}
-
-	return minCount, maxCount
+	return threshold + 1, 0
 }
 
 func extractReviewRemovalNoticeFromAny(v any) string {
@@ -58,7 +69,7 @@ func extractReviewRemovalNoticeFromAny(v any) string {
 			return ""
 		}
 
-		if reviewRemovalCountRegex.MatchString(candidate) {
+		if reviewRemovalCountRegex.MatchString(candidate) || reviewRemovalOverCountRegex.MatchString(candidate) {
 			return candidate
 		}
 

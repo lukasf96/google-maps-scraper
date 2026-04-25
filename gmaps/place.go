@@ -312,6 +312,8 @@ func (j *PlaceJob) extractReviewRemovalNotice(page scrapemate.BrowserPage) strin
 		const patterns = [
 			/(\d+\s*(?:bis|to|-|–)\s*\d+)[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed)/i,
 			/(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,250}?(?:entfernt|removed)[\s\S]{0,150}?(\d+\s*(?:bis|to|-|–)\s*\d+)/i,
+			/(?:über|ueber|over|more than)\s*\d+[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed)/i,
+			/(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,250}?(?:entfernt|removed)[\s\S]{0,150}?(?:über|ueber|over|more than)\s*\d+/i,
 		];
 
 		for (const pattern of patterns) {
