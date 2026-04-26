@@ -42,6 +42,12 @@ func TestParseReviewRemovals(t *testing.T) {
 			maxCount: 0,
 		},
 		{
+			name:     "german mehr als threshold notice",
+			input:    "Mehr als 250 Bewertungen aufgrund einer Beschwerde wegen Diffamierung entfernt.",
+			minCount: 251,
+			maxCount: 0,
+		},
+		{
 			name:     "invalid text",
 			input:    "No removals listed for this business.",
 			minCount: 0,

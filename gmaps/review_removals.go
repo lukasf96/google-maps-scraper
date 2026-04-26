@@ -7,9 +7,9 @@ import (
 )
 
 var reviewRemovalCountRegex = regexp.MustCompile(`(?i)\b(\d+)\s*(?:bis|to|-|–)\s*(\d+)\b`)
-var reviewRemovalOverCountRegex = regexp.MustCompile(`(?i)\b(?:über|ueber|over|more than)\s*(\d+)\b`)
-var reviewRemovalContextRegex = regexp.MustCompile(`(?i)(?:(?:diffam|defamation|beschwerden|complaints?).*(?:entfernt|removed))|(?:(?:entfernt|removed).*(?:diffam|defamation|beschwerden|complaints?))`)
-var reviewRemovalInlineRegex = regexp.MustCompile(`(?i)(\d+\s*(?:bis|to|-|–)\s*\d+[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerden|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed))`)
+var reviewRemovalOverCountRegex = regexp.MustCompile(`(?i)(?:über|ueber|mehr als|over|more than)\s*(\d+)`)
+var reviewRemovalContextRegex = regexp.MustCompile(`(?i)(?:(?:diffam|defamation|beschwerde(?:n)?|complaints?).*(?:entfernt|removed))|(?:(?:entfernt|removed).*(?:diffam|defamation|beschwerde(?:n)?|complaints?))`)
+var reviewRemovalInlineRegex = regexp.MustCompile(`(?i)((?:\d+\s*(?:bis|to|-|–)\s*\d+|(?:über|ueber|mehr als|over|more than)\s*\d+)[\s\S]{0,200}?(?:bewertungen|reviews)[\s\S]{0,250}?(?:beschwerde(?:n)?|complaints?|diffam(?:ierung|ation)?)[\s\S]{0,150}?(?:entfernt|removed))`)
 
 // parseReviewRemovals extracts a min/max range from the defamation-removal notice text.
 func parseReviewRemovals(raw string) (int, int) {
